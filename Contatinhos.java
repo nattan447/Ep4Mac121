@@ -43,9 +43,15 @@ public class Contatinhos {
      */
     public  void addContato(String nome, String insta , String tele, int prioridade){
     Contato contato = new Contato(nome,insta,tele,prioridade);
-    contatos.put(contato.nome,contato);
-    // bst com instagram sendo a key principal
-    bstIntagram.put(contato.insta,contato);
+        if(existeInsta(insta)){
+            System.err.println("instagram já existe");
+        }else if (existeNome(nome)) System.err.println("nome já cadastrado");
+        else {
+            contatos.put(contato.nome,contato);
+            //   bst com instagram sendo a key principal
+            bstIntagram.put(contato.insta,contato);
+        }
+
     }
 
 
@@ -67,27 +73,84 @@ public class Contatinhos {
         printRecursive(root.right);
     }
 
+
     /**
-     * busca o contato por nome
+     * busca o contato por nome e por instagram
      * @param nome : nome do contato
      */
     public void buscarContato(String nome){
         Contato busca = contatos.getPnome(nome);
-        if(busca==null) {System.out.println("contato não encontrado"); return ;}
+        if(busca==null){
+            System.out.println("contato não encontrado");
+            return;
+        }
         printCaracteristicas(busca);
+    }
+
+    /**
+     * verifica se o instagram existe na lista de contatos
+     * @param insta : nome do instagram
+     */
+    private boolean existeInsta(String insta){
+        Contato busca = bstIntagram.getPnome(insta);
+        return busca != null;
+    }
+
+    /**
+     * verifica se o nome do contato existe na lista de contatos
+     * @param  nome : nome do contato
+     */
+    private boolean existeNome(String nome){
+        Contato busca = contatos.getPnome(nome);
+        return busca != null;
     }
 
 
     /**
      * atualiza os dados de um contato
      * @param nome : nome do contato
+     *@param insta : novo instagram
      * @param tele : novo telefone
      * @param prioridade : nova prioridade
-     * @param insta : novo instagram
+     *
      */
     public  void updateContato(String nome, String insta , String tele, int prioridade){
+        updateBinary(contatos.root, nome,  insta, tele, prioridade);
+    }
 
-        contatos.update(nome,insta,tele,prioridade);
+    /**
+     * faz uma busca binaria pelo nome e atualiza o valor do nó
+     * @param nome : nome do contato
+     * @param nwinsta : novo telefone
+     * @param nwtele : nova prioridade
+     * @param nwprioridade : novo instagram
+     */
+    private void updateBinary(Node x, String nome, String nwinsta, String nwtele, int nwprioridade){
+        //essa funcao atualiza os dados do contado
+        if(x==null){
+            System.out.println("contato não encontrado");
+            return;
+        }
+
+        int cmp = nome.compareTo(x.nome);
+
+        if (cmp == 0){
+            // verifica por uma busca binaria na outra bst se o novo instagram já existe
+            if(existeInsta(nwinsta) && !nwinsta.equals(x.contato.insta)){
+                System.err.println("falha em atualizar os dados, Instagram já existe");
+                return;
+            }
+            x.contato.insta = nwinsta;
+            x.contato.tele = nwtele;
+            x.contato.prioridade = nwprioridade;
+            return;
+
+        }
+        if (cmp < 0)
+            updateBinary(x.left, nome, nwinsta,nwtele,nwprioridade);
+        else  {
+            updateBinary(x.right, nome, nwinsta,nwtele,nwprioridade);
+        }
 
     }
 
@@ -152,34 +215,19 @@ class RedblackBSt
     private static final boolean BLACK = false;
 
 
+    public Contato getPinsta(String nome){
+        Node x = root;
+        while (x != null)
+        {
+            int cmp = nome.compareTo(x.nome);
+            if (cmp < 0) x = x.left;
+            else if (cmp > 0) x = x.right;
+            else return x.contato;
+        }
+        return null;
 
-    public void update(String nome, String nwinsta,String nwtele,int nwprioridade){
-        updateBinary(root, nome,  nwinsta, nwtele, nwprioridade);
     }
 
-    private void updateBinary(Node x, String nome, String nwinsta, String nwtele, int nwprioridade){
-        //essa funcao atualiza os dados do contado
-        if(x==null){
-            System.out.println("contato não encontrado");
-            return;
-        }
-
-        int cmp = nome.compareTo(x.nome);
-
-        if (cmp == 0){
-            x.contato.insta = nwinsta;
-            x.contato.tele = nwtele;
-            x.contato.prioridade = nwprioridade;
-            return;
-
-        }
-        if (cmp < 0)
-            updateBinary(x.left, nome, nwinsta,nwtele,nwprioridade);
-        else  {
-            updateBinary(x.right, nome, nwinsta,nwtele,nwprioridade);
-        }
-
-    }
     public Contato getPnome(String nome)
     {
         Node x = root;
@@ -249,7 +297,7 @@ class RedblackBSt
         int cmp = nome.compareTo(x.nome);
 
         if (cmp == 0){
-            System.out.println("contato já existe");
+            System.err.println("contato já existe");
             return x;
         }
 
@@ -269,15 +317,79 @@ class RedblackBSt
 
     }
 
+    /**
+     * Removes the specified key and its associated value from this symbol table
+     * (if the key is in this symbol table).
+     *
+     * @param  key the key
+     * @throws IllegalArgumentException if {@code key} is {@code null}
+     */
+    public void delete(String key) {
+        if (key == null) throw new IllegalArgumentException("argument to delete() is null");
+        if (!contains(key)) return;
+
+        // if both children of root are black, set root to red
+        if (!isRed(root.left) && !isRed(root.right))
+            root.color = RED;
+
+        root = delete(root, key);
+        if (!isEmpty()) root.color = BLACK;
+        // assert check();
+    }
+
+
+    public boolean contains(String key) {
+        return getPinsta(key) != null;
+    }
+
+    public boolean isEmpty() {
+        return root == null;
+    }
+
+
+    private Node moveRedLeft(Node h) {
+        // assert (h != null);
+        // assert isRed(h) && !isRed(h.left) && !isRed(h.left.left);
+
+        flipColors(h);
+        if (isRed(h.right.left)) {
+            h.right = rotateRight(h.right);
+            h = rotateLeft(h);
+            flipColors(h);
+        }
+        return h;
+    }
+
+    // delete the key-value pair with the given key rooted at h
+    private Node delete(Node h, String key) {
+        // assert get(h, key) != null;
+
+        if (key.compareTo(h.key) < 0)  {
+            if (!isRed(h.left) && !isRed(h.left.left))
+                h = moveRedLeft(h);
+            h.left = delete(h.left, key);
+        }
+        else {
+            if (isRed(h.left))
+                h = rotateRight(h);
+            if (key.compareTo(h.key) == 0 && (h.right == null))
+                return null;
+            if (!isRed(h.right) && !isRed(h.right.left))
+                h = moveRedRight(h);
+            if (key.compareTo(h.key) == 0) {
+                Node x = min(h.right);
+                h.nome = x.key;
+                h.val = x.val;
+                // h.val = get(h.right, min(h.right).key);
+                // h.key = min(h.right).key;
+                h.right = deleteMin(h.right);
+            }
+            else h.right = delete(h.right, key);
+        }
+        return balance(h);
+    }
+
 }
-
-
-
-
-
-
-
-
 
 class Node
 {
