@@ -115,14 +115,25 @@ public class Contatinhos {
 
     /**
      * atualiza os dados de um contato, com base no nome desse contato
-     * @param nome : nome do contato
+     * @param key : nome ou instragram
      *@param insta : novo instagram
      * @param tele : novo telefone
      * @param prioridade : nova prioridade
      *
      */
-    public  void updateContato(String nome, String insta , String tele, int prioridade){
-        updateBinary(contatos.root, nome,  insta, tele, prioridade);
+    public  void updateContato(String key, String insta , String tele, int prioridade){
+        // verificamos se o usário quer atualizar o contato por instagram
+        Contato buscaPorInsta = bstIntagram.get(key);
+        if(buscaPorInsta==null){
+        }else  {
+            //se não querer , então é por nome
+            updateBinary(contatos.root, key,  insta, tele, prioridade);
+            // se querer buscamos por instagram e dps pegamos o nome do contato
+             key = buscaPorInsta.nome;
+            updateBinary(contatos.root, key,  insta, tele, prioridade);
+        }
+
+
     }
 
     /**
@@ -132,38 +143,57 @@ public class Contatinhos {
      * @param nwinsta : novo telefone
      * @param nwprioridade : novo instagram
      */
-    private void updateBinary(Node x, String nome, String nwinsta, String nwtele, int nwprioridade){
+    private void updateBinary(Node root, String nome, String nwinsta, String nwtele, int nwprioridade){
         //essa funcao atualiza os dados do contado
-        if(x==null){
+        if(root==null){
             System.err.println("ERROR : CONTATO COM NOME : "+ nome + "NÃO ENCONTRADO");
             return;
         }
 
-        int cmp = nome.compareTo(x.key);
+        int cmp = nome.compareTo(root.key);
 
         if (cmp == 0){
             // verifica por uma busca binaria na outra bst se o novo instagram já existe
-            if(existeInsta(nwinsta) && !nwinsta.equals(x.val.insta)){
+            if(existeInsta(nwinsta) && !nwinsta.equals(root.val.insta)){
                 System.err.println("FALHA EM ATUALIZAR OS DADOS , INSTAGRAM COM NOME "+nwinsta+ " JÁ EXISTE");
                 return;
             }
 
             //deleto o nó antigo , adiciono um novo nó na arvore do insta , para , se necessário alterear o valor do instagram
-            bstIntagram.delete(x.val.insta); //insta antigo
+            bstIntagram.delete(root.val.insta); //insta antigo
             bstIntagram.put(nwinsta, new Contato(nome,nwinsta,nwtele,nwprioridade));
-
-            x.val.insta = nwinsta;
-            x.val.tele = nwtele;
-            x.val.prioridade = nwprioridade;
+            root.val.insta = nwinsta;
+            root.val.tele = nwtele;
+            root.val.prioridade = nwprioridade;
             return;
 
         }
         if (cmp < 0)
-            updateBinary(x.left, nome, nwinsta,nwtele,nwprioridade);
+            updateBinary(root.left, nome, nwinsta,nwtele,nwprioridade);
         else  {
-            updateBinary(x.right, nome, nwinsta,nwtele,nwprioridade);
+            updateBinary(root.right, nome, nwinsta,nwtele,nwprioridade);
         }
 
+    }
+    //essa variavel serve de ruporte para a função de remover contato
+    private  boolean jaRemoveuContato = false;
+
+    /**
+     * remove o primeiro contato adicionado na lista
+     *
+     */
+    public  void remover(){
+        if(removerContatoP()!=null){
+            jaRemoveuContato = true;
+        }
+    }
+
+    private   Contato removerContatoP(){
+        if(jaRemoveuContato){
+            System.err.println("primeiro contato já  foi removido");
+            return null;
+        }
+        return   contatos.root.val;
     }
 
     /**
@@ -249,19 +279,20 @@ class RedblackBSt
 
 
 
-    public Contato get(String nome)
-    {
-        Node x = root;
-        while (x != null)
-        {
-            int cmp = nome.compareTo(x.key);
-            if (cmp < 0) x = x.left;
+    public Contato get(String key) {
+        if (key == null) throw new IllegalArgumentException("argument to get() is null");
+        return get(root, key);
+    }
+
+    private Contato get(Node x, String key) {
+        while (x != null) {
+            int cmp = key.toLowerCase().compareTo(x.key.toLowerCase());
+            if      (cmp < 0) x = x.left;
             else if (cmp > 0) x = x.right;
-            else return x.val;
+            else              return x.val;
         }
         return null;
     }
-
 
     public void put(String nome, Contato cnt)
     { root = put(root, nome, cnt);
@@ -373,8 +404,7 @@ class RedblackBSt
 
     // delete the key-value pair with the given key rooted at h
     private Node delete(Node h, String key) {
-        // assert get(h, key) != null;
-
+         assert get(h, key) != null;
         if (key.compareTo(h.key) < 0)  {
             if (!isRed(h.left) && !isRed(h.left.left))
                 h = moveRedLeft(h);
@@ -391,8 +421,8 @@ class RedblackBSt
                 Node x = min(h.right);
                 h.key = x.key;
                 h.val = x.val;
-                // h.val = get(h.right, min(h.right).key);
-                // h.key = min(h.right).key;
+                 h.val = get(h.right, min(h.right).key);
+                 h.key = min(h.right).key;
                 h.right = deleteMin(h.right);
             }
             else h.right = delete(h.right, key);
@@ -453,8 +483,7 @@ class RedblackBSt
     }
     // restore red-black tree invariant
     private Node balance(Node h) {
-        // assert (h != null);
-
+         assert (h != null);
         if (isRed(h.right) && !isRed(h.left))    h = rotateLeft(h);
         if (isRed(h.left) && isRed(h.left.left)) h = rotateRight(h);
         if (isRed(h.left) && isRed(h.right))     flipColors(h);
@@ -465,9 +494,8 @@ class RedblackBSt
     // Assuming that h is red and both h.left and h.left.left
     // are black, make h.left or one of its children red.
     private Node moveRedLeft(Node h) {
-        // assert (h != null);
-        // assert isRed(h) && !isRed(h.left) && !isRed(h.left.left);
-
+        assert (h != null);
+         assert isRed(h) && !isRed(h.left) && !isRed(h.left.left);
         flipColors(h);
         if (isRed(h.right.left)) {
             h.right = rotateRight(h.right);
@@ -480,8 +508,8 @@ class RedblackBSt
     // Assuming that h is red and both h.right and h.right.left
     // are black, make h.right or one of its children red.
     private Node moveRedRight(Node h) {
-        // assert (h != null);
-        // assert isRed(h) && !isRed(h.right) && !isRed(h.right.left);
+         assert (h != null);
+         assert isRed(h) && !isRed(h.right) && !isRed(h.right.left);
         flipColors(h);
         if (isRed(h.left.left)) {
             h = rotateRight(h);
