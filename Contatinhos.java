@@ -1,18 +1,30 @@
+/***************************************************************************
+ * MAC0121 ALGORITMOS E ESTRUTURAS DE DADOS I
+ * Nome: [nattan ferreira da silva]
+ * Número USP: [15520641]
+ * Exercício-Programa: [EP4]
+ * [implementar estruturas de dados em um sistema de gerenciamentps de contastos]
+ *
+ ***************************************************************************/
+
+
 import java.util.NoSuchElementException;
 
 public class Contatinhos {
 
     // simbol table dos contatos com a key sendo o nome
-    private final RedblackBSt contatos = new RedblackBSt();
+    private final RedblackBSt STnome = new RedblackBSt();
     // simbol table dos contatos com a key sendo o instagram
-    private final RedblackBSt bstIntagram = new RedblackBSt();
+    private final RedblackBSt STinstagram = new RedblackBSt();
     /**
      * lista os contatos por prioridade
      */
     public void listarPrioridade(){
-        Node[] arrayNodes = new Node[contatos.root.size];
+        //colocaremos todos contastos em arrayNodes
+        Node[] arrayNodes = new Node[STnome.root.size];
         Node[] aux = new Node[arrayNodes.length];
-        listarPrioridadeR(contatos.root,arrayNodes,0);
+        listarPrioridadeR(STnome.root,arrayNodes,0);
+        //depois que todos contatos estao no array ordenamos por prioridade usando o mergeSort
         mergeSort(arrayNodes,aux,0,arrayNodes.length-1);
         for(Node node:arrayNodes){
         printCaracteristicas(node.val);
@@ -44,24 +56,29 @@ public class Contatinhos {
      * @param prioridade : prioridade do contato
      */
     public  void addContato(String nome, String insta , String tele, int prioridade){
-    Contato contato = new Contato(nome,insta,tele,prioridade);
+        if(nome==null || insta==null || tele==null){
+            System.err.println("ERRO: dados insuficientes");
+            return;
+        }
+        //contato que iremos adicionar
+        Contato contato = new Contato(nome,insta,tele,prioridade);
+        if (primeiroContato==null) primeiroContato=contato;
+
         if(existeInsta(insta)){
             System.err.println("ERRO AO ADICIONAR O CONTATO : INSTAGRAM : "+ insta + " JÁ EXISTE");
         }else if (existeNome(nome)) System.err.println("ERRO AO ADICIONAR O CONTATO : NOME : "+ nome + " JÁ EXISTE");
         else {
-            contatos.put(contato.nome,contato);
-            //   bst com instagram sendo a key principal
-            bstIntagram.put(contato.insta,contato);
+            STnome.put(contato.nome,contato);
+            //   Symbol table com instagram sendo a key principal
+            STinstagram.put(contato.insta,contato);
         }
 
     }
-
-
     /**
      * imprimi a lista de contatos em ordem alfabética dos nomes
      */
     public  void printAlfabetica(){
-        printRecursive(contatos.root);
+        printRecursive(STnome.root);
     }
 
     /**
@@ -73,16 +90,16 @@ public class Contatinhos {
         printRecursive(root.left);
         printCaracteristicas(root.val);
         printRecursive(root.right);
-    }
 
+    }
 
     /**
      * busca o contato por nome ou por instagram
      * @param key : nome do contato ou perfil do instagram
      */
     public void buscarContato(String key){
-        Contato buscaPorNome = contatos.get(key);
-        Contato buscaPorInsta = bstIntagram.get(key);
+        Contato buscaPorNome = STnome.get(key);
+        Contato buscaPorInsta = STinstagram.get(key);
         if(buscaPorNome == null && buscaPorInsta==null) {
             System.err.println("CONTATO  "+key+ "   NÃO ENCONTRADO");
             return;
@@ -99,7 +116,7 @@ public class Contatinhos {
      * @param insta : nome do instagram
      */
     private boolean existeInsta(String insta){
-        Contato busca = bstIntagram.get(insta);
+        Contato busca = STinstagram.get(insta);
         return busca != null;
     }
 
@@ -108,29 +125,27 @@ public class Contatinhos {
      * @param  nome : nome do contato
      */
     private boolean existeNome(String nome){
-        Contato busca = contatos.get(nome);
+        Contato busca = STnome.get(nome);
         return busca != null;
     }
-
-
     /**
      * atualiza os dados de um contato, com base no nome desse contato
-     * @param key : nome ou instragram
+     * @param key : nome ou instragram do contato que queremos atualizar
      *@param insta : novo instagram
      * @param tele : novo telefone
      * @param prioridade : nova prioridade
      *
      */
-    public  void updateContato(String key, String insta , String tele, int prioridade){
+    public  void atualizarContato(String key, String insta , String tele, int prioridade){
         // verificamos se o usário quer atualizar o contato por instagram
-        Contato buscaPorInsta = bstIntagram.get(key);
+        Contato buscaPorInsta = STinstagram.get(key);
         if(buscaPorInsta==null){
-        }else  {
             //se não querer , então é por nome
-            updateBinary(contatos.root, key,  insta, tele, prioridade);
+            updateBinary(STnome.root, key,  insta, tele, prioridade);
+        }else  {
             // se querer buscamos por instagram e dps pegamos o nome do contato
              key = buscaPorInsta.nome;
-            updateBinary(contatos.root, key,  insta, tele, prioridade);
+            updateBinary(STnome.root, key,  insta, tele, prioridade);
         }
 
 
@@ -160,8 +175,8 @@ public class Contatinhos {
             }
 
             //deleto o nó antigo , adiciono um novo nó na arvore do insta , para , se necessário alterear o valor do instagram
-            bstIntagram.delete(root.val.insta); //insta antigo
-            bstIntagram.put(nwinsta, new Contato(nome,nwinsta,nwtele,nwprioridade));
+            STinstagram.delete(root.val.insta); //insta antigo
+            STinstagram.put(nwinsta, new Contato(nome,nwinsta,nwtele,nwprioridade));
             root.val.insta = nwinsta;
             root.val.tele = nwtele;
             root.val.prioridade = nwprioridade;
@@ -175,26 +190,26 @@ public class Contatinhos {
         }
 
     }
-    //essa variavel serve de ruporte para a função de remover contato
-    private  boolean jaRemoveuContato = false;
 
+
+    //unica funcao dessa var: guardar o primeiro contato adicionado
+    private Contato primeiroContato = null;
+    // essa variavel servira de base para a funcao remover
+    private  boolean jadeletou = false;
     /**
-     * remove o primeiro contato adicionado na lista
+     * remove o primeiro contato adicionado na lista de contatos
      *
      */
-    public  void remover(){
-        if(removerContatoP()!=null){
-            jaRemoveuContato = true;
-        }
+public void remover(){
+    if(jadeletou){
+        System.err.println("ERRO: PRIMEIRO CONTATO ADICIONADO JÁ REMOVIDO");
+        return;
     }
-
-    private   Contato removerContatoP(){
-        if(jaRemoveuContato){
-            System.err.println("primeiro contato já  foi removido");
-            return null;
-        }
-        return   contatos.root.val;
-    }
+    STnome.delete(primeiroContato.nome);
+    STinstagram.delete(primeiroContato.insta);
+    jadeletou= true;
+    System.out.println("primeiro contato removido com sucesso");
+}
 
     /**
      * printa todas variaveis de um contato
@@ -207,6 +222,7 @@ public class Contatinhos {
         System.out.println("prioridade : "+contato.prioridade);
         System.out.println(" ");
     }
+
 
 
     //MERGESORT
@@ -234,7 +250,6 @@ public class Contatinhos {
             }
         }
     }
-
 }
 
 class  Contato{
@@ -252,7 +267,11 @@ class  Contato{
 
 
 
-///////////////ESTRUTURA DE DADO, ARVORE BINÁRIA DE BUSCA ,NÃO NECESSITA LER
+///////////////ESTRUTURA DE DADO, ARVORE BINÁRIA DE BUSCA RED BLACK , OBS : ALGUMAS OPERAÇÕES FORAM RETIRADAS PELA NÃO NECESSIDADE DE USO , EX ; rank() , isBalanced
+///APENAS AS OPERAÇÕES PADROES EX : GET , PUT , DELETE e a operacao de de balanceamento da arvore foram mantidas
+///como a operacao de balanceamento foi mantida , logo , é de crer que a arvore esteja balanceada.
+
+
 class Node
 {
     public String key;
@@ -294,29 +313,48 @@ class RedblackBSt
         return null;
     }
 
-    public void put(String nome, Contato cnt)
-    { root = put(root, nome, cnt);
+
+    /**
+     * Inserts the specified key-value pair into the symbol table, overwriting the old
+     * value with the new value if the symbol table already contains the specified key.
+     * Deletes the specified key (and its associated value) from this symbol table
+     * if the specified value is {@code null}.
+     *
+     * @param key the key
+     * @param val the value
+     * @throws IllegalArgumentException if {@code key} is {@code null}
+*/
+    public void put(String key, Contato val)
+    {    if (key == null) throw new IllegalArgumentException("first argument to put() is null");
+        if (val == null) {
+            delete(key);
+            return;
+        }
+        root = put(root, key, val);
         root.color = BLACK;
     }
-    private Node put(Node x, String nome, Contato cnt)
+
+
+
+
+    private Node put(Node x, String key, Contato val)
     {
-        if (x == null) return new Node(nome, cnt,RED,1);
+        if (x == null) return new Node(key, val,RED,1);
 
-        int cmp = nome.compareTo(x.key);
-
+        int cmp = key.compareTo(x.key);
+        //OBS , auteracao na estrutura original , se o o contato que queremso adcionar existe , nao adcionamos nada
         if (cmp == 0){
             System.err.println("contato já existe");
             return x;
         }
-
-        if (cmp < 0){
-            x.left = put(x.left, nome, cnt);
+       else if (cmp < 0){
+            x.left = put(x.left, key, val);
         }
         else {
-            x.right = put(x.right, nome, cnt);
+            x.right = put(x.right, key, val);
         }
-
         if (isRed(x.right) && !isRed(x.left))      x = rotateLeft(x);
+
         if (isRed(x.left)  &&  isRed(x.left.left)) x = rotateRight(x);
         if (isRed(x.left)  &&  isRed(x.right))     flipColors(x);
         x.size = size(x.left) + size(x.right) + 1;
@@ -397,14 +435,15 @@ class RedblackBSt
 
         root = delete(root, key);
         if (!isEmpty()) root.color = BLACK;
-        // assert check();
+
     }
 
 
 
     // delete the key-value pair with the given key rooted at h
     private Node delete(Node h, String key) {
-         assert get(h, key) != null;
+        // assert get(h, key) != null;
+
         if (key.compareTo(h.key) < 0)  {
             if (!isRed(h.left) && !isRed(h.left.left))
                 h = moveRedLeft(h);
@@ -421,8 +460,8 @@ class RedblackBSt
                 Node x = min(h.right);
                 h.key = x.key;
                 h.val = x.val;
-                 h.val = get(h.right, min(h.right).key);
-                 h.key = min(h.right).key;
+                // h.val = get(h.right, min(h.right).key);
+                // h.key = min(h.right).key;
                 h.right = deleteMin(h.right);
             }
             else h.right = delete(h.right, key);
@@ -505,7 +544,7 @@ class RedblackBSt
         return h;
     }
 
-    // Assuming that h is red and both h.right and h.right.left
+            // Assuming that h is red and both h.right and h.right.left
     // are black, make h.right or one of its children red.
     private Node moveRedRight(Node h) {
          assert (h != null);
