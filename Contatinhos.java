@@ -1,11 +1,3 @@
-/***************************************************************************
- * MAC0121 ALGORITMOS E ESTRUTURAS DE DADOS I
- * Nome: [nattan ferreira da silva]
- * Número USP: [15520641]
- * Exercício-Programa: [EP4]
- * [implementar estruturas de dados em um sistema de gerenciamentps de contastos]
- *
- ***************************************************************************/
 
 
 import java.util.NoSuchElementException;
